@@ -1,11 +1,8 @@
-# shop_project/app/models.py
-
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, Numeric, Table, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from database import Base
+from .database import Base
 import enum
-
 
 class OrderStatus(str, enum.Enum):
     pending   = "pending"
@@ -14,24 +11,19 @@ class OrderStatus(str, enum.Enum):
     delivered = "delivered"
     cancelled = "cancelled"
 
-
 class PaymentStatus(str, enum.Enum):
     unpaid   = "unpaid"
     paid     = "paid"
     refunded = "refunded"
 
-
-# Ko'p-ko'pga: Product <-> Tag
 product_tags = Table(
     "product_tags", Base.metadata,
     Column("product_id", Integer, ForeignKey("products.id"), primary_key=True),
     Column("tag_id",     Integer, ForeignKey("tags.id"),     primary_key=True),
 )
 
-
 class User(Base):
     __tablename__ = "users"
-
     id          = Column(Integer, primary_key=True, index=True)
     email       = Column(String(100), unique=True, nullable=False)
     phone       = Column(String(20),  unique=True, nullable=True)
@@ -46,10 +38,8 @@ class User(Base):
     cart      = relationship("Cart",    back_populates="user", uselist=False)
     reviews   = relationship("Review",  back_populates="user")
 
-
 class Address(Base):
     __tablename__ = "addresses"
-
     id          = Column(Integer, primary_key=True, index=True)
     user_id     = Column(Integer, ForeignKey("users.id"), nullable=False)
     full_name   = Column(String(100), nullable=False)
@@ -62,10 +52,8 @@ class Address(Base):
 
     user = relationship("User", back_populates="addresses")
 
-
 class Category(Base):
     __tablename__ = "categories"
-
     id          = Column(Integer, primary_key=True, index=True)
     name        = Column(String(100), unique=True, nullable=False)
     slug        = Column(String(100), unique=True, nullable=False)
@@ -77,19 +65,15 @@ class Category(Base):
     children = relationship("Category", back_populates="parent")
     products = relationship("Product",  back_populates="category")
 
-
 class Tag(Base):
     __tablename__ = "tags"
-
     id   = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), unique=True, nullable=False)
 
     products = relationship("Product", secondary=product_tags, back_populates="tags")
 
-
 class Product(Base):
     __tablename__ = "products"
-
     id             = Column(Integer, primary_key=True, index=True)
     name           = Column(String(255), nullable=False)
     slug           = Column(String(255), unique=True, nullable=False)
@@ -111,10 +95,8 @@ class Product(Base):
     order_items = relationship("OrderItem",    back_populates="product")
     cart_items  = relationship("CartItem",     back_populates="product")
 
-
 class ProductImage(Base):
     __tablename__ = "product_images"
-
     id         = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     image_url  = Column(String(255), nullable=False)
@@ -123,10 +105,8 @@ class ProductImage(Base):
 
     product = relationship("Product", back_populates="images")
 
-
 class Review(Base):
     __tablename__ = "reviews"
-
     id         = Column(Integer, primary_key=True, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     user_id    = Column(Integer, ForeignKey("users.id"),    nullable=False)
@@ -137,10 +117,8 @@ class Review(Base):
     product = relationship("Product", back_populates="reviews")
     user    = relationship("User",    back_populates="reviews")
 
-
 class Cart(Base):
     __tablename__ = "carts"
-
     id         = Column(Integer, primary_key=True, index=True)
     user_id    = Column(Integer, ForeignKey("users.id"), unique=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -148,10 +126,8 @@ class Cart(Base):
     user  = relationship("User",     back_populates="cart")
     items = relationship("CartItem", back_populates="cart", cascade="all, delete")
 
-
 class CartItem(Base):
     __tablename__ = "cart_items"
-
     id         = Column(Integer, primary_key=True, index=True)
     cart_id    = Column(Integer, ForeignKey("carts.id"),    nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
@@ -160,15 +136,13 @@ class CartItem(Base):
     cart    = relationship("Cart",    back_populates="items")
     product = relationship("Product", back_populates="cart_items")
 
-
 class Order(Base):
     __tablename__ = "orders"
-
     id             = Column(Integer, primary_key=True, index=True)
     user_id        = Column(Integer, ForeignKey("users.id"),    nullable=False)
     address_id     = Column(Integer, ForeignKey("addresses.id"))
-    status         = Column(Enum(OrderStatus),   default=OrderStatus.pending)
-    payment_status = Column(Enum(PaymentStatus), default=PaymentStatus.unpaid)
+    status         = Column(Enum(OrderStatus),    default=OrderStatus.pending)
+    payment_status = Column(Enum(PaymentStatus),  default=PaymentStatus.unpaid)
     total_amount   = Column(Numeric(10, 2), nullable=False)
     delivery_fee   = Column(Numeric(8, 2),  default=0)
     notes          = Column(Text)
@@ -178,10 +152,8 @@ class Order(Base):
     address = relationship("Address")
     items   = relationship("OrderItem", back_populates="order", cascade="all, delete")
 
-
 class OrderItem(Base):
     __tablename__ = "order_items"
-
     id          = Column(Integer, primary_key=True, index=True)
     order_id    = Column(Integer, ForeignKey("orders.id"),   nullable=False)
     product_id  = Column(Integer, ForeignKey("products.id"), nullable=False)
